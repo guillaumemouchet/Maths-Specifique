@@ -1,0 +1,370 @@
+<!-- Labo 1 Maths spé II -->
+<!-- Authors: Alessio Comi, Benjamin Mouchet et Guillaume Mouchet -->
+<!-- SP22 HE-arc -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labo 1</title>
+	
+</head>
+<body>
+	<div>
+	<h2>Auteurs:</h2>
+		<ul>
+			<li>Alessio Comi</li>
+			<li>Benjamin Mouchet</li>
+			<li>Guillaume Mouchet</li>
+		</ul>
+	</div>
+	<h1>Labo 1: </h1>
+    <div style="float: left">
+        <p>
+            <label for="lengthBinary">Longueur binaire : </label>
+            <input type="number" name="lengthBinary" id="lengthBinary" value="7" min="7" max="256"> 
+        </p>
+        <p>
+            <label for="value1">Valeur 1 : </label>
+            <input type="number" name="value1" id="value1" step="0.1" value="0.2">
+		</p>
+		<p>
+			<label for="value2">Valeur 2 : </label>
+            <input type="number" name="value2" id="value2" step="0.1" value="0.1">
+        
+		</p>
+		<p>
+			<label for="Binaire">Binaire : </label>
+            <input type="text" pattern="[01]+" name="Binaire" id="Binaire">
+        
+		</p>
+        <p>
+            <button id="show">Show</button>
+            <button id="code">Decode</button>
+
+        </p>
+		<hr>
+		<p>Valeur 1 en binaire: <span id="coding1"></span></p>
+		<p>Signe en binaire: <span id="signe1"></span></p>
+		<p>Exposant en binaire: <span id="exponent1"></span></p>
+		<p>Mantisse en binaire: <span id="out_mantissa1"></span></p>
+		<p>Résultat en entier: <span id="final_result_int1"></span></p>
+		<hr>
+		<p>Valeur 2 en binaire: <span id="coding2"></span></p>
+		<p>Signe en binaire: <span id="signe2"></span></p>
+		<p>Exposant en binaire: <span id="exponent2"></span></p>
+		<p>Mantisse en binaire: <span id="out_mantissa2"></span></p>
+		<p>Résultat en entier: <span id="final_result_int2"></span></p>
+		<hr>
+		<p>Valeur décodée du binaire entrée par l'utilisateur: <span id="final_binaire"></span></p>
+    </div>
+	<div style="float: left; margin-left: 5em;">
+		<p>Longueur de l'exposant: <span id="sizeE"></span></p>
+		<p>Longueur de la mantisse: <span id="sizeM"></span></p>
+    </div>
+    <div style="float: left; margin-left: 5em;">
+		<p>Résultat de l'addition</p>
+		<p>Résultat en binaire: <span id="final_result_bin"></span></p>
+		<p>Résultat en entier : <span id="final_result_int_add"></span></p>
+    </div>
+    <script>
+        let show = document.getElementById("show");
+		let code  = document.getElementById("code");
+		let inputBit = document.getElementById("lengthBinary");
+        let inputValue1 = document.getElementById("value1");
+		let inputValue2 = document.getElementById("value2");
+		let binaire = document.getElementById("Binaire");
+        let output1 = document.getElementById("coding1");
+		let output2 = document.getElementById("coding2");
+		
+
+		code.addEventListener("click",event =>{
+			let stringToDecode = Binaire.value;
+			//Making input is binary
+			if (stringToDecode.match('[^01]'))
+			{
+				final_binaire.innerText = 'Only 0 and 1 allowed in pattern';
+			}else
+			{
+				let arrayToDecode = stringToDecode.split('');
+				let lenE = exponentLength(arrayToDecode.length);
+				let d = Math.pow(2, lenE-1)-2;
+				let resultInt = decode(arrayToDecode,lenE,d);
+				final_binaire.innerText = resultInt;
+			}
+		});
+		
+		show.addEventListener("click",event =>{
+			//Variable declaration
+			let nbBits = parseInt(inputBit.value);
+			let encodingValue1 = parseFloat(inputValue1.value);
+			let encodingValue2 = parseFloat(inputValue2.value);
+			let lenE = exponentLength(nbBits);
+			let m = nbBits-lenE-1;
+			let d = Math.pow(2, lenE-1)-2;
+			
+			//Determining if value1 is a power of 2
+			if(Number.isInteger(Math.log(Math.abs(encodingValue1))/Math.log(2))) //if it's an integer we have a power of 2
+			{
+			encodingValue1 = encodingValue1*2;
+			}
+			//Determining if value2 is a power of 2
+			if(Number.isInteger(Math.log(Math.abs(encodingValue2))/Math.log(2))) //if it's an integer we have a power of 2
+			{
+			encodingValue2 = encodingValue2*2;
+			}
+			
+			
+			sizeE.innerText  = lenE;
+			sizeM.innerText = m;
+			
+			let signedBit1 = new Array(1);
+			let signedBit2 = new Array(1);
+			
+			let exp1 = new Array(lenE);
+			let exp2 = new Array(lenE);
+			
+			let mantissa1 = new Array(m);
+			let mantissa2 = new Array(m);
+			
+			let ePrime1 = defineEPrime(encodingValue1);
+			let ePrime2 = defineEPrime(encodingValue2);
+			
+			let eToEncode1 = ePrime1 + d;
+			let eToEncode2 = ePrime2 + d;
+			
+			defineSignBit(signedBit1, encodingValue1);
+			defineSignBit(signedBit2, encodingValue2);
+			
+			defineExp(exp1,encodingValue1, eToEncode1);
+			defineExp(exp2,encodingValue2, eToEncode2);
+			
+    		defineMantisse(mantissa1,encodingValue1, ePrime1, m);
+			defineMantisse(mantissa2,encodingValue2, ePrime2, m);
+			
+    		//Join 3 tables signedBit, exp and mantissa
+			let total1 = signedBit1.concat(exp1.concat(mantissa1));
+			let total2 = signedBit2.concat(exp2.concat(mantissa2));
+			
+			display(signedBit1, signe1);
+			display(signedBit2, signe2);
+			
+			display(exp1, exponent1);
+			display(exp2, exponent2);
+			
+			display(mantissa1, out_mantissa1);
+			display(mantissa2, out_mantissa2);
+			
+			display(total1, output1);
+			display(total2, output2);
+			
+			let totalInt1 = decode(total1, lenE, d);
+			let totalInt2 = decode(total2, lenE, d);
+			
+			final_result_int1.innerText = totalInt1;
+			final_result_int2.innerText = totalInt2;
+			
+			
+			//if the encoding value is 0 no need to do an addition we can display the other number
+			if(encodingValue1==0 || encodingValue2==0)
+			{
+				if(encodingValue2==0)
+				{
+					display(total1, final_result_bin);
+					final_result_int_add.innerText= totalInt1;
+				}else if(encodingValue1==0)
+				{
+					display(total2, final_result_bin);
+					final_result_int_add.innerText= totalInt2;
+				}
+				
+			}else //No values are at 0 we can do an addition
+			{
+				//Addition
+				addition(signedBit1,signedBit2,exp1,exp2,mantissa1,mantissa2,eToEncode1,eToEncode2,ePrime1,ePrime2, d, m, lenE);
+			}
+			
+        });
+		
+		function addition(signedBit1,signedBit2,exp1,exp2,mantissa1,mantissa2,eToEncode1,eToEncode2,ePrime1,ePrime2, d, m, lenE)
+		{
+		//Determine Min Max
+			let newMantissaMin;
+			let newmantissaMax;
+			let newExponent;
+			let newIntExponent;
+			
+			if(eToEncode1<=eToEncode2)
+			{
+				newIntExponent = ePrime2 + d;
+				newExponent = exp2; //Clone of max exponent tab
+				newMantissaMin = mantissa1; //Clone of smallest mantissa
+				newMantissaMax = mantissa2; //Clone of biggest mantissa	
+			}
+			else if(eToEncode1>eToEncode2)
+			{
+				newIntExponent = ePrime1 + d;
+				newExponent = exp1; //Clone of max exponent tab
+				newMantissaMin = mantissa2; //Clone of smallest mantissa
+				newMantissaMax = mantissa1; //Clone of biggest mantissa
+			}
+			
+			//Initialise mantissa with hidden bit
+			newMantissaMin.unshift(1);
+			newMantissaMax.unshift(1);
+			
+			//Modifing mantissa of the smallest exponent  
+			let delta = Math.abs(eToEncode1-eToEncode2);
+			for(let k=0; k<delta;k++)//Shifting mantissa to correspond with the exponent shift
+			{
+				newMantissaMin.pop();
+				newMantissaMin.unshift(0);
+			}
+
+			//Add mantissas
+			let mantissaFinal = new Array(m);
+			let carry = 0;
+			/*
+			Determine different outcome for the addition with the carry
+			If signed bits are different, two differents methods are used
+			*/
+			if(signedBit1[0] == signedBit2[0])
+			{
+				for(let j = m; j>=0;j--)
+				{
+					let res = newMantissaMax[j]+newMantissaMin[j]+carry;
+					switch(res)
+					{
+					case 0:	
+					case 1:
+						mantissaFinal[j] = res;
+						carry = 0;
+						break;
+					case 2:
+						mantissaFinal[j] = 0;
+						carry = 1;
+						break;
+					case 3:
+						mantissaFinal[j] = 1;
+						carry = 1;
+						break;
+					}
+				}
+			}
+			else
+			{
+				//TO DO 2's complement 
+			}
+
+			//Normalisation of the new mantissa	
+			if(carry==1)
+			{
+				//We add at the front the carry and remove the last bit
+				mantissaFinal.pop();
+				mantissaFinal.unshift(1);
+				newIntExponent += 1;
+				intToBinary(newExponent, newIntExponent);
+			}
+			mantissaFinal.shift();
+						
+			let totalFinal = signedBit1.concat(newExponent.concat(mantissaFinal));
+			display(totalFinal, final_result_bin);
+			
+			let totalInt3 = decode(totalFinal, lenE, d);
+			final_result_int_add.innerText = totalInt3;
+		}
+		
+		function defineEPrime(value)
+		{
+			if(value == 0) // the 0 is hard coded to avoid log2(0) which is undefined 
+			{
+				return 0;
+			}
+			else 
+			{
+				return Math.ceil(Math.log2(Math.abs(value)));
+			}
+		}
+		
+		// We decide to determine exponant size following a quadratic regression
+		function exponentLength(nbBits) 
+		{
+			if(nbBits <= 128)
+			{
+				return Math.round(-0.000588038*Math.pow(nbBits,2) + 0.171371*nbBits + 2.66667);
+			}
+			else
+			{
+				return Math.round(4*Math.log2(nbBits)-13);
+			}
+		}
+
+		function intToBinary(tab,value)
+		{
+			let size = tab.length;
+			for (let i = 0; i < size; i++)
+			{
+				tab[i] = value%2;
+				value = parseInt(value/2);
+			}
+			tab = tab.reverse();
+		}
+
+		function defineSignBit(bit, value)
+		{
+			bit[0] = (value>=0) ? 0 : 1;
+		}
+
+		function defineExp(exp, value, eToEncode)
+		{
+			if(value == 0) // We need a special treatment for zero, exponent is unormalised 
+			{
+				intToBinary(exp,0);
+			}
+			else 
+			{
+				intToBinary(exp,eToEncode);
+			}	
+		}
+
+		function defineMantisse(mantisse, value, ePrime, m)
+		{
+			//Since valueToEncode = 2^e * mantissa / 2^(m+1)
+			let mToEncode = parseInt(Math.abs(value) / Math.pow(2,ePrime)* (Math.pow(2, m+1)));
+			intToBinary(mantisse,mToEncode);
+		}
+
+		function display(tab, output)
+		{
+			output.innerText = tab.join('');
+		}
+		
+		function decode(total, lenE, d)
+		{
+			let size = total.length;
+			//Determine the value of the exponant
+			let intExponent = 0; 
+			for(let i = 1; i<=lenE; i++)
+			{
+				intExponent += (total[i]==1) ? Math.pow(2,lenE-i) : 0;
+			}
+			//Substract d to get the real value
+			intExponent = intExponent - d;
+			
+			let intMantissa = 0;
+			//Determine the value of the mantissa
+			for(let i = lenE+1; i<size; i++)
+			{
+				intMantissa += (total[i]==1) ? Math.pow(2,(size-i-1)) : 0;
+			}
+			//add the hidden bit
+			intMantissa += Math.pow(2,size-lenE-1);
+			//Divide by pow(2,mantissaSize+1) or size-LenE
+			intMantissa /= Math.pow(2,size-lenE);
+			let value = (-2*total[0] +1) * intMantissa * Math.pow(2,intExponent); 
+			return value;
+		}
+    </script>
+</body>
+</html>
